@@ -6,6 +6,7 @@ from .number_utils import NumberUtils
 from .path_utils import PathUtils
 from .string_utils import StringUtils
 from .system_utils import SystemUtils
+from .ip_utils import IpUtils
 from .tokens import Tokens
 from .torrent import Torrent
 from .cache_manager import cacheman, TokenCache, ConfigLoadCache
