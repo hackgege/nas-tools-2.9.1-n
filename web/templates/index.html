@@ -292,113 +292,6 @@
   </div>
 </div>
 <script type="text/javascript">
-  if ('{{ ServerSucess }}' != 'False') {
-    // 电影变化图
-    if (typeof (chart_movie) != 'undefined')
-      chart_movie.dispose();
-
-    chart_movie = echarts.init($('#chart-movie-bg')[0], null, {
-      height: 40.0
-    });
-
-    option_chart_movie = {
-      animation: true,
-      color: [
-          tabler.getColor('primary')
-      ],
-      legend: {
-        show: false,
-      },
-      grid: {
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 2,
-        containLabel: false
-      },
-      tooltip: {
-        trigger: 'axis'
-      },
-      xAxis: {
-        type: 'category',
-        show: false,
-        data: {{ MovieChartLabels| safe }}
-      },
-      yAxis: {show: false,},
-      series: [{
-        name: '电影',
-        type: 'line',
-        large: true,
-        smooth: true,
-        symbol: 'none',
-        data: {{ MovieNums }}
-      }]
-    };
-    chart_movie.setOption(option_chart_movie);
-
-    // 电视剧变化图
-    if (typeof (chart_tv) != 'undefined')
-      chart_tv.dispose();
-
-    chart_tv = echarts.init($('#chart-tv-bg')[0], null, {
-      height: 40.0
-    });
-
-    option_chart_tv = {
-      animation: true,
-      color: [
-          tabler.getColor('primary'),
-        tabler.getColor('gray-600')
-      ],
-      legend: {
-        show: false,
-      },
-      grid: {
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 2,
-        containLabel: false
-      },
-      tooltip: {
-        trigger: 'axis'
-      },
-      xAxis: {
-        type: 'category',
-        show: false,
-        data: {{ TvChartLabels| safe }}
-      },
-      yAxis: {show: false,},
-      series: [{
-        name: '电视剧',
-        type: 'line',
-        large: true,
-        smooth: true,
-        symbol: 'none',
-        data: {{ TvNums }}
-      }, {
-        name: '动漫',
-        type: 'line',
-        large: true,
-        smooth: true,
-        symbol: 'none',
-        lineStyle: {
-          width: 1.5,
-          type: 'dashed'
-        },
-        data: {{ AnimeNums }}
-      }]
-    };
-    chart_tv.setOption(option_chart_tv);
-
-    // 响应大小调整
-    window.onresize = function () {
-      chart_tv.resize();
-      chart_movie.resize();
-    };
-  }
-</script>
-<script type="text/javascript">
   //显示媒体库同步框
   function show_mediasync_modal() {
     //获取同步状态
@@ -459,5 +352,112 @@
       }
     }, true, false);
   }
+
+</script>
+<script type="text/javascript">
+
+  var chart_statistics = undefined;
+
+  // 加载图表
+  $('#modal-index-statistics').off('shown.bs.modal').on('shown.bs.modal', function (e) {
+    // 请求数据
+    ajax_post("get_transfer_statistics", {}, function(ret){
+
+      // 电影变化图
+      if (typeof (chart_statistics) != 'undefined')
+        chart_statistics.dispose();
+
+      chart_statistics = echarts.init(document.getElementById("index_statistics_chart"), null, {
+        renderer: 'canvas',
+        useDirtyRect: false
+      });
+
+      const option = {
+        title: {
+          text: ''
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985'
+            }
+          }
+        },
+        legend: {
+          data: ['电影', '电视剧', '动漫'],
+          textStyle: {
+            color: '#206bc4'
+          }
+        },
+        toolbox: {
+          feature: {
+
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: [
+          {
+            type: 'category',
+            boundaryGap: false,
+            data: ret.Labels
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value'
+          }
+        ],
+        series: [
+          {
+            name: '电影',
+            type: 'line',
+            stack: 'Total',
+            areaStyle: {},
+            emphasis: {
+              focus: 'series'
+            },
+            data: ret.MovieNums
+          },
+          {
+            name: '电视剧',
+            type: 'line',
+            stack: 'Total',
+            areaStyle: {},
+            emphasis: {
+              focus: 'series'
+            },
+            data: ret.TvNums
+          },
+          {
+            name: '动漫',
+            type: 'line',
+            stack: 'Total',
+            areaStyle: {},
+            emphasis: {
+              focus: 'series'
+            },
+            data: ret.AnimeNums
+          }
+        ]
+      };
+      chart_statistics.setOption(option);
+    });
+  });
+
+  $(document).ready(function () {
+    // 响应大小调整
+    window.onresize = function () {
+      if(chart_statistics) {
+        chart_statistics.resize();
+      }
+    };
+  });
 
 </script>
