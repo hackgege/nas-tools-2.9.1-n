@@ -18,6 +18,20 @@
           <a href="javascript:show_mediasync_modal()" class="btn btn-primary d-sm-none btn-icon">
             {{ SVG.refresh() }}
           </a>
+          <button class="btn btn-cyan d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-index-statistics">
+            {{ SVG.pie() }}
+            统计数据
+          </button>
+          <button class="btn btn-cyan d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-index-statistics">
+            {{ SVG.pie() }}
+          </button>
+          <button class="btn d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-index-playhistory">
+            {{ SVG.history() }}
+            播放记录
+          </button>
+          <button class="btn d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-index-playhistory">
+            {{ SVG.history() }}
+          </button>
         </div>
       </div>
     </div>
