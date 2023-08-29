@@ -1,492 +1,504 @@
-import os
-import re
+{% import 'macro/svg.html' as SVG %}
+{% import 'macro/oops.html' as OOPS %}
+<div class="container-xl">
+  <!-- Page title -->
+  <div class="page-header d-print-none">
+    <div class="row align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          我的媒体库
+        </h2>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <a href="javascript:show_mediasync_modal()" class="btn btn-primary d-none d-sm-inline-block">
+            {{ SVG.refresh() }}
+            媒体库同步
+          </a>
+          <a href="javascript:show_mediasync_modal()" class="btn btn-primary d-sm-none btn-icon">
+            {{ SVG.refresh() }}
+          </a>
+          <button class="btn btn-cyan d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-index-statistics">
+            {{ SVG.pie() }}
+            统计数据
+          </button>
+          <button class="btn btn-cyan d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-index-statistics">
+            {{ SVG.pie() }}
+          </button>
+          <button class="btn d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-index-playhistory">
+            {{ SVG.history() }}
+            播放记录
+          </button>
+          <button class="btn d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-index-playhistory">
+            {{ SVG.history() }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% if ServerSucess %}
+{% with curdomainleft = request.host.split(':')[0] %}
+<div class="page-body">
+  <div class="container-xl">
+    <div class="d-grid gap-3 grid-normal-card">
+      {% for Library in Librarys %}
+        {% if LibrarySyncConf and Library.id|string in LibrarySyncConf %}
+        {% set theLibLink = Library.link %}
+          {% if "127.0.0.1" in theLibLink[0:16] %}
+            {% set theLibLink = theLibLink|replace("127.0.0.1",curdomainleft,1) %}
+          {% elif "localhost" in theLibLink[0:16] %}
+            {% set theLibLink = theLibLink|replace("localhost",curdomainleft,1) %}
+          {% endif %}
+          <a class="card card-link-pop rounded-3 overflow-hidden library-{{ Library.id }}" href="{{ theLibLink }}" target="_blank">
+          {% if Library.image %}
+            <custom-img img-class="w-100"
+                        img-src="{{ Library.image }}"
+                        img-ratio="50%"
+                        img-style="object-fit: cover;"
+            ></custom-img>
+          {% else %}
+            <custom-plex-library-img img-src-list='{{ Library.image_list }}'></custom-plex-library-img>
+          {% endif %}
+            <div class="m-2 text-center">
+              {{ Library.name }}
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% if Resumes %}
+<div class="container-xl">
+  <div class="page-header d-print-none">
+    <div class="row align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          正在观看
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-body">
+  <div class="container-xl">
+    <div class="d-grid gap-3 grid-normal-card align-items-start">
+      {% for Resume in Resumes %}
+        {% set theLibLink = Resume.link %}
+        {% if "127.0.0.1" in theLibLink[0:16] %}
+          {% set theLibLink = theLibLink|replace("127.0.0.1",curdomainleft,1) %}
+        {% elif "localhost" in theLibLink[0:16] %}
+          {% set theLibLink = theLibLink|replace("localhost",curdomainleft,1) %}
+        {% endif %}
+      <a class="card card-link-pop rounded-3 overflow-hidden resume-{{ Resume.id }}" href="{{ theLibLink }}" target="_blank">
+        <custom-img img-class="w-100"
+                    img-src="{{ Resume.image }}"
+                    img-ratio="50%"
+                    img-style="object-fit: cover;"
+        ></custom-img>
+        <span class="badge badge-pill {% if Resume.type == '电影' %}bg-green{% else %}bg-blue{% endif %}" style="position: absolute; top: 10px; left: 10px">
+          {{ Resume.type }}
+        </span>
+        {% if Resume.percent %}
+        <div class="card-progress" style="overflow: hidden">
+          <div class="progress-bar bg-green" style="width:{{ Resume.percent }}%" role="progressbar" aria-valuenow="{{ Resume.percent }}" aria-valuemin="0" aria-valuemax="100">
+          </div>
+        </div>
+        {% endif %}
+        <div class="m-2 text-center" style="-webkit-line-clamp:1; display: -webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow: ellipsis;">
+          {{ Resume.name }}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if Latests %}
+<div class="container-xl">
+  <div class="page-header d-print-none">
+    <div class="row align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          最新入库
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-body">
+  <div class="container-xl">
+    <div class="d-grid gap-3 grid-media-card align-items-start">
+      {% for Latest in Latests %}
+      {% set theLibLink = Latest.link %}
+        {% if "127.0.0.1" in theLibLink[0:16] %}
+          {% set theLibLink = theLibLink|replace("127.0.0.1",curdomainleft,1) %}
+        {% elif "localhost" in theLibLink[0:16] %}
+          {% set theLibLink = theLibLink|replace("localhost",curdomainleft,1) %}
+        {% endif %}
+      <a class="card card-link-pop overflow-hidden rounded-3 latest-{{ Latest.id }}" href="{{ theLibLink }}" target="_blank">
+        <custom-img img-class="w-100"
+                    img-src="{{ Latest.image }}"
+                    img-ratio="150%"
+                    img-style="object-fit: cover;"
+        ></custom-img>
+        <span class="badge badge-pill {% if Latest.type == '电影' %}bg-green{% else %}bg-blue{% endif %}" style="position: absolute; top: 10px; left: 10px">
+          {{ Latest.type }}
+        </span>
+        <div class="m-2 text-center" style="-webkit-line-clamp:1; display: -webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow: ellipsis;">{{ Latest.name }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endwith %}
+{% else %}
+{{ OOPS.systemerror('媒体服务器连接失败！', '当前无法连接媒体服务器获取数据，请确认Emby/Jellyfin/Plex配置是否正确。') }}
+{% endif %}
+<div class="modal modal-blur fade" id="index-mediasync-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="card border-0">
+        <div class="card-body text-center">
+          <div class="mb-3">
+            <span class="avatar avatar-xl avatar-rounded"
+                  style="background-image: url('../static/img/mediaserver/{{ MediaServerType }}.png')"></span>
+          </div>
+          <div class="card-title mb-1">{{ MediaServerType|title }}</div>
+          <div id="mediasync_status"></div>
+        </div>
+        <details class="m-3">
+            <summary class="summary">
+              媒体库列表
+            </summary>
+            <div class="row mt-2">
+              <div class="form-selectgroup">
+                {% for Library in Librarys %}
+                <label class="form-selectgroup-item">
+                  <input type="checkbox" name="sync_library" value="{{ Library.id }}" class="form-selectgroup-input"
+                      {% if Library.id in LibrarySyncConf %}checked{% endif %}
+                  >
+                  <span class="form-selectgroup-label">{{ Library.name }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+          </details>
+        <div class="card-progress">
+          <div class="progress-bar bg-green" id="mediasync_process_bar" style="width: 0" role="progressbar"
+               aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="d-flex">
+          <a href="javascript:save_media_config()" id="save_mediasync_btn" class="card-btn">保存</a>
+          <a href="javascript:start_media_sync(true)" id="mediasync_btn" class="card-btn">开始同步</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal modal-blur fade" id="modal-index-playhistory" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">播放记录</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="card-body card-body-scrollable card-body-scrollable-shadow p-0 overflow-hidden">
+          <div class="divide-y">
+            {% for Activity in Activitys %}
+              <div>
+                <div class="row">
+                  <div class="col-auto">
+                <span class="avatar">
+                  {% if Activity.type == "LG" %}
+                    {{ SVG.user() }}
+                  {% else %}
+                    {{ SVG.player_play() }}
+                  {% endif %}
+                </span>
+                  </div>
+                  <div class="col">
+                    <div class="text-truncate">
+                      {{ Activity.event }}
+                    </div>
+                    <div class="text-muted">{{ Activity.date }}</div>
+                  </div>
+                  <div class="col-auto align-self-center">
+                    <div class="bg-primary"></div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal modal-blur fade" id="modal-index-statistics" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">统计数据</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-0">
+        <div class="row">
+          <div class="col-lg-4 mt-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <div class="subheader">电影</div>
+                </div>
+                <div class="d-flex align-items-baseline">
+                  <div class="h1 mb-0 me-2">{{ MediaCount.MovieCount }}</div>
+                </div>
+              </div>
+              <div class="card-progress" style="overflow: hidden">
+                <div class="progress-bar bg-green" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 mt-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <div class="subheader">电视剧/动漫</div>
+                </div>
+                <div class="d-flex align-items-baseline">
+                  <div class="h1 mb-0 me-2">{{ MediaCount.SeriesCount }}</div>
+                  <div class="me-auto">
+                  <span class="text-green d-inline-flex align-items-center lh-1">
+                    {{ MediaCount.EpisodeCount }}
+                  </span>
+                  </div>
+                </div>
+              </div>
+              <div class="card-progress" style="overflow: hidden">
+                <div class="progress-bar bg-green" style="width:0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 mt-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center">
+                  <div class="subheader">存储空间</div>
+                </div>
+                <div class="d-flex align-items-baseline">
+                  <div class="h1 mb-0 me-2">{{ TotalSpace }}</div>
+                </div>
+              </div>
+              <div class="card-progress" style="overflow: hidden">
+                <div class="progress-bar bg-green" style="width:{{ UsedPercent }}%" role="progressbar" aria-valuenow="{{ UsedPercent }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div id="index_statistics_chart" style="height: 20rem"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  //显示媒体库同步框
+  function show_mediasync_modal() {
+    //获取同步状态
+    ajax_post("refresh_process", {type: "mediasync"}, function (ret) {
+      if (ret.code === 0 && ret.value < 100) {
+        //同步中
+        $("#index-mediasync-modal").modal('show');
+        start_media_sync(false);
+      } else {
+        //没有在同步，获取目前同步的数据情况
+        ajax_post("mediasync_state", {}, function (ret) {
+          if (ret.code === 0) {
+            $("#mediasync_status").text(ret.text);
+          }
+          $("#mediasync_btn").text("开始同步")
+              .attr("href", "javascript:start_media_sync(true)");
+          $("#save_mediasync_btn").show();
+          $("#index-mediasync-modal").modal('show');
+        }, true, false);
+      }
+    }, true, false);
+  }
 
-import log
-from config import Config
-from app.mediaserver.client._base import _IMediaClient
-from app.utils import RequestUtils, SystemUtils, ExceptionUtils
-from app.utils.types import MediaType, MediaServerType
+  //关闭媒体库同步框
+  function close_mediasync_modal() {
+    $("#index-mediasync-modal").modal('hide');
+  }
 
+  //开始媒体库同步
+  function start_media_sync(flag) {
+    $("#mediasync_btn").text("关闭")
+        .attr("href", "javascript:close_mediasync_modal()");
+    $("#save_mediasync_btn").hide();
+    if (flag) {
+      ajax_post("start_mediasync", {
+        "librarys": select_GetSelectedVAL("sync_library")
+      }, function (ret) {
+        setTimeout("start_mediasync_progress()", 1000);
+      }, true, false);
+    } else {
+      setTimeout("start_mediasync_progress()", 1000);
+    }
+  }
 
-class Emby(_IMediaClient):
-    schema = "emby"
-    server_type = MediaServerType.EMBY.value
-    _client_config = {}
+  // 保存媒体库配置
+  function save_media_config(){
+    let params = {
+      "key": "SyncLibrary",
+      "value": select_GetSelectedVAL("sync_library")
+    };
+    ajax_post("set_system_config", params, function (ret) {
+      $("#index-mediasync-modal").modal('hide');
+      window_history_refresh();
+    });
+  }
 
-    _apikey = None
-    _host = None
-    _user = None
-    _libraries = []
+  // 停止刷新进度
+  function stop_mediasync_progress() {
+    if (MediaSyncProgressEs) {
+      MediaSyncProgressEs.close();
+      MediaSyncProgressEs = undefined;
+    }
+  }
 
-    def __init__(self, config=None):
-        if config:
-            self._client_config = config
-        else:
-            self._client_config = Config().get_config('emby')
-        self.init_config()
+  //刷新进度
+  var MediaSyncProgressEs;
+  function start_mediasync_progress() {
+    stop_mediasync_progress();
+    MediaSyncProgressEs = new EventSource(`stream-progress?type=mediasync`);
+    MediaSyncProgressEs.onmessage = function (event) {
+      let ret = JSON.parse(event.data);
+      if (ret.code === 0) {
+        $("#mediasync_process_bar").attr("style", "width: " + ret.value + "%")
+            .attr("aria-valuenow", ret.value);
+        $("#mediasync_status").text(ret.text);
+      }
+      if ($("#index-mediasync-modal").is(":hidden")) {
+        stop_mediasync_progress();
+      }
+    }
+  }
 
-    def init_config(self):
-        if self._client_config:
-            self._host = self._client_config.get('host')
-            if self._host:
-                if not self._host.startswith('http'):
-                    self._host = "http://" + self._host
-                if not self._host.endswith('/'):
-                    self._host = self._host + "/"
-            self._apikey = self._client_config.get('api_key')
-            if self._host and self._apikey:
-                self._libraries = self.__get_emby_librarys()
-                self._user = self.get_admin_user()
+</script>
+<script type="text/javascript">
 
-    @classmethod
-    def match(cls, ctype):
-        return True if ctype in [cls.schema, cls.server_type] else False
+  var chart_statistics = undefined;
 
-    def get_status(self):
-        """
-        测试连通性
-        """
-        return True if self.get_medias_count() else False
+  // 加载图表
+  $('#modal-index-statistics').off('shown.bs.modal').on('shown.bs.modal', function (e) {
+    // 请求数据
+    ajax_post("get_transfer_statistics", {}, function(ret){
 
-    def __get_emby_librarys(self):
-        """
-        获取Emby媒体库列表
-        """
-        if not self._host or not self._apikey:
-            return []
-        req_url = "%semby/Library/SelectableMediaFolders?api_key=%s" % (self._host, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                return res.json()
-            else:
-                log.error(f"【{self.server_type}】Library/SelectableMediaFolders 未获取到返回数据")
-                return []
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Library/SelectableMediaFolders 出错：" + str(e))
-            return []
+      // 电影变化图
+      if (typeof (chart_statistics) != 'undefined')
+        chart_statistics.dispose();
 
-    def get_admin_user(self):
-        """
-        获得管理员用户
-        """
-        if not self._host or not self._apikey:
-            return None
-        req_url = "%sUsers?api_key=%s" % (self._host, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                users = res.json()
-                for user in users:
-                    if user.get("Policy", {}).get("IsAdministrator"):
-                        return user.get("Id")
-            else:
-                log.error(f"【{self.server_type}】Users 未获取到返回数据")
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Users出错：" + str(e))
-        return None
+      chart_statistics = echarts.init(document.getElementById("index_statistics_chart"), null, {
+        renderer: 'canvas',
+        useDirtyRect: false
+      });
 
-    def get_user_count(self):
-        """
-        获得用户数量
-        """
-        if not self._host or not self._apikey:
-            return 0
-        req_url = "%semby/Users/Query?api_key=%s" % (self._host, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                return res.json().get("TotalRecordCount")
-            else:
-                log.error(f"【{self.server_type}】Users/Query 未获取到返回数据")
-                return 0
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Users/Query出错：" + str(e))
-            return 0
+      const option = {
+        title: {
+          text: ''
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross',
+            label: {
+              backgroundColor: '#6a7985'
+            }
+          }
+        },
+        legend: {
+          data: ['电影', '电视剧', '动漫'],
+          textStyle: {
+            color: '#206bc4'
+          }
+        },
+        toolbox: {
+          feature: {
 
-    def get_activity_log(self, num):
-        """
-        获取Emby活动记录
-        """
-        if not self._host or not self._apikey:
-            return []
-        req_url = "%semby/System/ActivityLog/Entries?api_key=%s&" % (self._host, self._apikey)
-        ret_array = []
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                ret_json = res.json()
-                items = ret_json.get('Items')
-                for item in items:
-                    if item.get("Type") == "AuthenticationSucceeded":
-                        event_type = "LG"
-                        event_date = SystemUtils.get_local_time(item.get("Date"))
-                        event_str = "%s, %s" % (item.get("Name"), item.get("ShortOverview"))
-                        activity = {"type": event_type, "event": event_str, "date": event_date}
-                        ret_array.append(activity)
-                    if item.get("Type") == "VideoPlayback":
-                        event_type = "PL"
-                        event_date = SystemUtils.get_local_time(item.get("Date"))
-                        event_str = item.get("Name")
-                        activity = {"type": event_type, "event": event_str, "date": event_date}
-                        ret_array.append(activity)
-            else:
-                log.error(f"【{self.server_type}】System/ActivityLog/Entries 未获取到返回数据")
-                return []
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接System/ActivityLog/Entries出错：" + str(e))
-            return []
-        return ret_array[:num]
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true
+        },
+        xAxis: [
+          {
+            type: 'category',
+            boundaryGap: false,
+            data: ret.Labels
+          }
+        ],
+        yAxis: [
+          {
+            type: 'value'
+          }
+        ],
+        series: [
+          {
+            name: '电影',
+            type: 'line',
+            stack: 'Total',
+            areaStyle: {},
+            emphasis: {
+              focus: 'series'
+            },
+            data: ret.MovieNums
+          },
+          {
+            name: '电视剧',
+            type: 'line',
+            stack: 'Total',
+            areaStyle: {},
+            emphasis: {
+              focus: 'series'
+            },
+            data: ret.TvNums
+          },
+          {
+            name: '动漫',
+            type: 'line',
+            stack: 'Total',
+            areaStyle: {},
+            emphasis: {
+              focus: 'series'
+            },
+            data: ret.AnimeNums
+          }
+        ]
+      };
+      chart_statistics.setOption(option);
+    });
+  });
 
-    def get_medias_count(self):
-        """
-        获得电影、电视剧、动漫媒体数量
-        :return: MovieCount SeriesCount SongCount
-        """
-        if not self._host or not self._apikey:
-            return {}
-        req_url = "%semby/Items/Counts?api_key=%s" % (self._host, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                return res.json()
-            else:
-                log.error(f"【{self.server_type}】Items/Counts 未获取到返回数据")
-                return {}
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Items/Counts出错：" + str(e))
-            return {}
+  $(document).ready(function () {
+    // 响应大小调整
+    window.onresize = function () {
+      if(chart_statistics) {
+        chart_statistics.resize();
+      }
+    };
+  });
 
-    def __get_emby_series_id_by_name(self, name, year):
-        """
-        根据名称查询Emby中剧集的SeriesId
-        :param name: 标题
-        :param year: 年份
-        :return: None 表示连不通，""表示未找到，找到返回ID
-        """
-        if not self._host or not self._apikey:
-            return None
-        req_url = "%semby/Items?IncludeItemTypes=Series&Fields=ProductionYear&StartIndex=0&Recursive=true&SearchTerm=%s&Limit=10&IncludeSearchTypes=false&api_key=%s" % (
-            self._host, name, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                res_items = res.json().get("Items")
-                if res_items:
-                    for res_item in res_items:
-                        if res_item.get('Name') == name and (
-                                not year or str(res_item.get('ProductionYear')) == str(year)):
-                            return res_item.get('Id')
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Items出错：" + str(e))
-            return None
-        return ""
-
-    def get_movies(self, title, year=None):
-        """
-        根据标题和年份，检查电影是否在Emby中存在，存在则返回列表
-        :param title: 标题
-        :param year: 年份，可以为空，为空时不按年份过滤
-        :return: 含title、year属性的字典列表
-        """
-        if not self._host or not self._apikey:
-            return None
-        req_url = "%semby/Items?IncludeItemTypes=Movie&Fields=ProductionYear&StartIndex=0&Recursive=true&SearchTerm=%s&Limit=10&IncludeSearchTypes=false&api_key=%s" % (
-            self._host, title, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                res_items = res.json().get("Items")
-                if res_items:
-                    ret_movies = []
-                    for res_item in res_items:
-                        if res_item.get('Name') == title and (
-                                not year or str(res_item.get('ProductionYear')) == str(year)):
-                            ret_movies.append(
-                                {'title': res_item.get('Name'), 'year': str(res_item.get('ProductionYear'))})
-                            return ret_movies
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Items出错：" + str(e))
-            return None
-        return []
-
-    def __get_emby_tv_episodes(self, title, year, tmdb_id=None, season=None):
-        """
-        根据标题和年份和季，返回Emby中的剧集列表
-        :param title: 标题
-        :param year: 年份，可以为空，为空时不按年份过滤
-        :param tmdb_id: TMDBID
-        :param season: 季
-        :return: 集号的列表
-        """
-        if not self._host or not self._apikey:
-            return None
-        # 电视剧
-        item_id = self.__get_emby_series_id_by_name(title, year)
-        if item_id is None:
-            return None
-        if not item_id:
-            return []
-        # 验证tmdbid是否相同
-        item_tmdbid = self.get_iteminfo(item_id).get("ProviderIds", {}).get("Tmdb")
-        if tmdb_id and item_tmdbid:
-            if str(tmdb_id) != str(item_tmdbid):
-                return []
-        # /Shows/Id/Episodes 查集的信息
-        if not season:
-            season = 1
-        req_url = "%semby/Shows/%s/Episodes?Season=%s&IsMissing=false&api_key=%s" % (
-            self._host, item_id, season, self._apikey)
-        try:
-            res_json = RequestUtils().get_res(req_url)
-            if res_json:
-                res_items = res_json.json().get("Items")
-                exists_episodes = []
-                for res_item in res_items:
-                    exists_episodes.append(int(res_item.get("IndexNumber")))
-                return exists_episodes
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Shows/Id/Episodes出错：" + str(e))
-            return None
-        return []
-
-    def get_no_exists_episodes(self, meta_info, season, total_num):
-        """
-        根据标题、年份、季、总集数，查询Emby中缺少哪几集
-        :param meta_info: 已识别的需要查询的媒体信息
-        :param season: 季号，数字
-        :param total_num: 该季的总集数
-        :return: 该季不存在的集号列表
-        """
-        if not self._host or not self._apikey:
-            return None
-        exists_episodes = self.__get_emby_tv_episodes(meta_info.title, meta_info.year, meta_info.tmdb_id, season)
-        if not isinstance(exists_episodes, list):
-            return None
-        total_episodes = [episode for episode in range(1, total_num + 1)]
-        return list(set(total_episodes).difference(set(exists_episodes)))
-
-    def get_image_by_id(self, item_id, image_type):
-        """
-        根据ItemId从Emby查询图片地址
-        :param item_id: 在Emby中的ID
-        :param image_type: 图片的类弄地，poster或者backdrop等
-        :return: 图片对应在TMDB中的URL
-        """
-        if not self._host or not self._apikey:
-            return None
-        req_url = "%semby/Items/%s/RemoteImages?api_key=%s" % (self._host, item_id, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res:
-                images = res.json().get("Images")
-                for image in images:
-                    if image.get("ProviderName") == "TheMovieDb" and image.get("Type") == image_type:
-                        return image.get("Url")
-            else:
-                log.error(f"【{self.server_type}】Items/RemoteImages 未获取到返回数据")
-                return None
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Items/Id/RemoteImages出错：" + str(e))
-            return None
-        return None
-
-    def __refresh_emby_library_by_id(self, item_id):
-        """
-        通知Emby刷新一个项目的媒体库
-        """
-        if not self._host or not self._apikey:
-            return False
-        req_url = "%semby/Items/%s/Refresh?Recursive=true&api_key=%s" % (self._host, item_id, self._apikey)
-        try:
-            res = RequestUtils().post_res(req_url)
-            if res:
-                return True
-            else:
-                log.info(f"【{self.server_type}】刷新媒体库对象 {item_id} 失败，无法连接Emby！")
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Items/Id/Refresh出错：" + str(e))
-            return False
-        return False
-
-    def refresh_root_library(self):
-        """
-        通知Emby刷新整个媒体库
-        """
-        if not self._host or not self._apikey:
-            return False
-        req_url = "%semby/Library/Refresh?api_key=%s" % (self._host, self._apikey)
-        try:
-            res = RequestUtils().post_res(req_url)
-            if res:
-                return True
-            else:
-                log.info(f"【{self.server_type}】刷新媒体库失败，无法连接Emby！")
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Library/Refresh出错：" + str(e))
-            return False
-        return False
-
-    def refresh_library_by_items(self, items):
-        """
-        按类型、名称、年份来刷新媒体库
-        :param items: 已识别的需要刷新媒体库的媒体信息列表
-        """
-        if not items:
-            return
-        # 收集要刷新的媒体库信息
-        log.info(f"【{self.server_type}】开始刷新Emby媒体库...")
-        library_ids = []
-        for item in items:
-            if not item:
-                continue
-            library_id = self.__get_emby_library_id_by_item(item)
-            if library_id and library_id not in library_ids:
-                library_ids.append(library_id)
-        # 开始刷新媒体库
-        if "/" in library_ids:
-            self.refresh_root_library()
-            return
-        for library_id in library_ids:
-            if library_id != "/":
-                self.__refresh_emby_library_by_id(library_id)
-        log.info(f"【{self.server_type}】Emby媒体库刷新完成")
-
-    def __get_emby_library_id_by_item(self, item):
-        """
-        根据媒体信息查询在哪个媒体库，返回要刷新的位置的ID
-        :param item: 由title、year、type组成的字典
-        """
-        if not item.get("title") or not item.get("year") or not item.get("type"):
-            return None
-        if item.get("type") == MediaType.TV:
-            item_id = self.__get_emby_series_id_by_name(item.get("title"), item.get("year"))
-            if item_id:
-                # 存在电视剧，则直接刷新这个电视剧就行
-                return item_id
-        else:
-            if self.get_movies(item.get("title"), item.get("year")):
-                # 已存在，不用刷新
-                return None
-        # 查找需要刷新的媒体库ID
-        for library in self._libraries:
-            # 找同级路径最多的媒体库（要求容器内映射路径与实际一致）
-            max_equal_path_id = None
-            max_path_len = 0
-            equal_path_num = 0
-            for folder in library.get("SubFolders"):
-                path_list = re.split(pattern='/+|\\\\+', string=folder.get("Path"))
-                if item.get("category") != path_list[-1]:
-                    continue
-                try:
-                    path_len = len(os.path.commonpath([item.get("target_path"), folder.get("Path")]))
-                    if path_len >= max_path_len:
-                        max_path_len = path_len
-                        max_equal_path_id = folder.get("Id")
-                        equal_path_num += 1
-                except Exception as err:
-                    ExceptionUtils.exception_traceback(err)
-                    continue
-            if max_equal_path_id:
-                return max_equal_path_id if equal_path_num == 1 else library.get("Id")
-            # 如果找不到，只要路径中有分类目录名就命中
-            for folder in library.get("SubFolders"):
-                if folder.get("Path") and re.search(r"[/\\]%s" % item.get("category"), folder.get("Path")):
-                    return library.get("Id")
-        # 刷新根目录
-        return "/"
-
-    def get_libraries(self):
-        """
-        获取媒体服务器所有媒体库列表
-        """
-        if self._host and self._apikey:
-            self._libraries = self.__get_emby_librarys()
-        libraries = []
-        for library in self._libraries:
-            libraries.append({"id": library.get("Id"), "name": library.get("Name")})
-        return libraries
-
-    def get_iteminfo(self, itemid):
-        """
-        获取单个项目详情
-        """
-        if not itemid:
-            return {}
-        if not self._host or not self._apikey:
-            return {}
-        req_url = "%semby/Users/%s/Items/%s?api_key=%s" % (self._host, self._user, itemid, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res and res.status_code == 200:
-                return res.json()
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            return {}
-
-    def get_items(self, parent):
-        """
-        获取媒体服务器所有媒体库列表
-        """
-        if not parent:
-            yield {}
-        if not self._host or not self._apikey:
-            yield {}
-        req_url = "%semby/Users/%s/Items?ParentId=%s&api_key=%s" % (self._host, self._user, parent, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res and res.status_code == 200:
-                results = res.json().get("Items") or []
-                for result in results:
-                    if not result:
-                        continue
-                    if result.get("Type") in ["Movie", "Series"]:
-                        item_info = self.get_iteminfo(result.get("Id"))
-                        yield {"id": result.get("Id"),
-                               "library": item_info.get("ParentId"),
-                               "type": item_info.get("Type"),
-                               "title": item_info.get("Name"),
-                               "originalTitle": item_info.get("OriginalTitle"),
-                               "year": item_info.get("ProductionYear"),
-                               "tmdbid": item_info.get("ProviderIds", {}).get("Tmdb"),
-                               "imdbid": item_info.get("ProviderIds", {}).get("Imdb"),
-                               "path": item_info.get("Path"),
-                               "json": str(item_info)}
-                    elif "Folder" in result.get("Type"):
-                        for item in self.get_items(parent=result.get('Id')):
-                            yield item
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            log.error(f"【{self.server_type}】连接Users/Items出错：" + str(e))
-        yield {}
-
-    def get_playing_sessions(self):
-        """
-        获取正在播放的会话
-        """
-        if not self._host or not self._apikey:
-            return []
-        playing_sessions = []
-        req_url = "%semby/Sessions?api_key=%s" % (self._host, self._apikey)
-        try:
-            res = RequestUtils().get_res(req_url)
-            if res and res.status_code == 200:
-                sessions = res.json()
-                for session in sessions:
-                    if session.get("NowPlayingItem"):
-                        playing_sessions.append(session)
-            return playing_sessions
-        except Exception as e:
-            ExceptionUtils.exception_traceback(e)
-            return []
+</script>
