@@ -182,6 +182,52 @@
     </div>
   </div>
 </div>  
+{% if Resumes %}
+<div class="container-xl">
+  <div class="page-header d-print-none">
+    <div class="row align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          正在观看
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-body">
+  <div class="container-xl">
+    <div class="d-grid gap-3 grid-normal-card align-items-start">
+      {% for Resume in Resumes %}
+        {% set theLibLink = Resume.link %}
+        {% if "127.0.0.1" in theLibLink[0:16] %}
+          {% set theLibLink = theLibLink|replace("127.0.0.1",curdomainleft,1) %}
+        {% elif "localhost" in theLibLink[0:16] %}
+          {% set theLibLink = theLibLink|replace("localhost",curdomainleft,1) %}
+        {% endif %}
+      <a class="card card-link-pop rounded-3 overflow-hidden resume-{{ Resume.id }}" href="{{ theLibLink }}" target="_blank">
+        <custom-img img-class="w-100"
+                    img-src="{{ Resume.image }}"
+                    img-ratio="50%"
+                    img-style="object-fit: cover;"
+        ></custom-img>
+        <span class="badge badge-pill {% if Resume.type == '电影' %}bg-green{% else %}bg-blue{% endif %}" style="position: absolute; top: 10px; left: 10px">
+          {{ Resume.type }}
+        </span>
+        {% if Resume.percent %}
+        <div class="card-progress" style="overflow: hidden">
+          <div class="progress-bar bg-green" style="width:{{ Resume.percent }}%" role="progressbar" aria-valuenow="{{ Resume.percent }}" aria-valuemin="0" aria-valuemax="100">
+          </div>
+        </div>
+        {% endif %}
+        <div class="m-2 text-center" style="-webkit-line-clamp:1; display: -webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow: ellipsis;">
+          {{ Resume.name }}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endwith %}
 {% else %}
 {{ OOPS.systemerror('媒体服务器连接失败！', '当前无法连接媒体服务器获取数据，请确认Emby/Jellyfin/Plex配置是否正确。') }}
